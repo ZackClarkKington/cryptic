@@ -54,6 +54,16 @@ func IndexHandler(w http.ResponseWriter, r *http.Request) {
 	w.Write([]byte("Cryptic\n"))
 }
 
+/*
+	RegistrationHandler(w, r) - Registers new clients with the server
+
+	Parses JSON content in the POST body and populates a new client struct,
+	JSON content should be formatted as such:
+	{
+		"key": "CLIENT_KEY",
+		"id": "CLIENT_ID"
+	}
+*/
 func RegistrationHandler(w http.ResponseWriter, r *http.Request) {
 	body, err := ioutil.ReadAll(r.Body)
 
@@ -78,6 +88,16 @@ func RegistrationHandler(w http.ResponseWriter, r *http.Request) {
 	w.Write([]byte("Success"))
 }
 
+/*
+	GetKeyById(w, r) - Gets the keys for a set of client ids
+
+	Client Ids are contained within a JSON array passed in the POST body.
+
+	Returns JSON in the following format:
+	{
+		"CLIENT_ID": "CLIENT_KEY"
+	}
+*/
 func GetKeyById(w http.ResponseWriter, r *http.Request) {
 	body, err := ioutil.ReadAll(r.Body)
 
@@ -94,7 +114,11 @@ func GetKeyById(w http.ResponseWriter, r *http.Request) {
 	}
 
 	var keys map[string][]byte = make(map[string][]byte)
-
+	/*
+		For each specified client id:
+		- Check if the client exists
+		- If the client exists then add the client key to the array of keys to be returned
+	*/
 	for i := 0; i < len(ids); i++ {
 		id := ids[i]
 		if client, ok := clients[id]; ok {
@@ -107,6 +131,18 @@ func GetKeyById(w http.ResponseWriter, r *http.Request) {
 	w.Write(output)
 }
 
+/*
+	SendMessages(w, r) - Sends the specified messages to the specified client ids.
+
+	Parameters are passed as JSON formatted as so:
+	{
+		"RECIPIENT_ID": ["MESSAGE_BODY"],
+		"sender": "SENDER_ID"
+	}
+
+	Note that multiple recipients can be sent multiple messages within this construct,
+	but there can only ever be one sender.
+*/
 func SendMessages(w http.ResponseWriter, r *http.Request) {
 	body, err := ioutil.ReadAll(r.Body)
 
@@ -115,15 +151,18 @@ func SendMessages(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	var messages map[string][]string
+	var recipients map[string][]string
 	var sender string
 
-	if err = json.Unmarshal(body, &messages); err != nil {
+	if err = json.Unmarshal(body, &recipients); err != nil {
 		InvalidJSONError(w)
 		return
 	}
-
-	if sender_str, ok := messages["sender"]; ok {
+	/*
+		Check that the message batch includes a sender id,
+		if it doesn't then an error must be returned
+	*/
+	if sender_str, ok := recipients["sender"]; ok {
 		sender = sender_str[0]
 	} else {
 		w.WriteHeader(http.StatusBadRequest)
@@ -132,11 +171,20 @@ func SendMessages(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	for k, v := range messages {
+	/*
+		For each field in the map of recipients, first check if it is the sender field
+		 - if not then append all messages for that recipient to the recipient's message
+		buffer.
+	*/
+	for k, v := range recipients {
 		if k == "sender" {
 			continue
 		} else {
 			if client, ok := clients[k]; ok {
+				/*
+					Here we use a goroutine to prevent appending multiple messages from blocking the
+					server responding to the sender before timeout occurs
+				*/
 				go Append(sender, v, client.MessageBuff)
 			}
 		}
@@ -146,6 +194,24 @@ func SendMessages(w http.ResponseWriter, r *http.Request) {
 	w.Write([]byte("Success"))
 }
 
+/*
+	GetMessagesForId(w, r) - Gets all the messages buffered on the server for a specified client id
+
+	Parameters to pass (in JSON):
+	{
+		"id": "CLIENT_ID"
+	}
+
+	Returns:
+	[
+		{
+			"Sender": "SENDER_ID",
+			"Body": "MESSAGE_BODY"
+		}
+	]
+
+	Once the server has sent a buffered message to its' intended client it will no longer be stored on the server.
+*/
 func GetMessagesForId(w http.ResponseWriter, r *http.Request) {
 	body, err := ioutil.ReadAll(r.Body)
 
@@ -163,6 +229,11 @@ func GetMessagesForId(w http.ResponseWriter, r *http.Request) {
 	var messages []Message
 	recipient_id := params["id"]
 
+	/*
+		First check that the requested client exists, then:
+		- Create an array of Message objects
+		- Pop each message in the client's buffer into this array
+	*/
 	if recipient, ok := clients[recipient_id]; ok {
 		message_buff := recipient.MessageBuff
 		num_messages := message_buff.messages.Length()
@@ -176,6 +247,9 @@ func GetMessagesForId(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
+	/*
+		Encode the array of Message objects into JSON and return to the client
+	*/
 	var encoded_messages []byte
 	encoded_messages, err = json.Marshal(messages)
 
