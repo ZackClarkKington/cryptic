@@ -21,4 +21,7 @@ Response will follow the format:
 /getMessages - Get messages buffered for a client id, once messages have been returned from this endpoint they are burned on the server, parameters should be formatted as follows:
 
     {"id":"CLIENT_ID"}
+Response will follow the format:
+
+    [{"Sender":"SENDER_ID", Body: "MESSAGE_BODY"}]
 
