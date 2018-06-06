@@ -7,11 +7,6 @@ import (
 	"net/http"
 )
 
-type Group struct {
-	id      string             `json "id"`
-	clients map[string]*Client `json "clients"`
-}
-
 type Client struct {
 	Key         []byte `json "key"`
 	Id          string `json "id"`
