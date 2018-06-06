@@ -1,4 +1,8 @@
 # Cryptic
+The idea behind this server is to expose a fairly simple API for sending and receiving batches of encrypted messages, with
+all crypto operations being performed on the individual client devices.
+
+In its' current state the server can handle personal messages between clients, groups have not yet been implemented.
 
 API:
 
