@@ -20,7 +20,7 @@ Response will follow the format:
 
 /sendMessage - Send a batch of messages to a set of client id's, parameters should be formatted as follows:
 
-    {"sender": "SENDER_ID", "RECIPIENT_ID": ["MESSAGE"]}
+    {"sender": ["SENDER_ID"], "RECIPIENT_ID": ["MESSAGE"]}
 
 /getMessages - Get messages buffered for a client id, once messages have been returned from this endpoint they are burned on the server, parameters should be formatted as follows:
 

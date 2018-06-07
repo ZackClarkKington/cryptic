@@ -53,7 +53,7 @@ func RegisterTestClient(testClient Client, t *testing.T) Client {
 func TestRegistrationHandler(t *testing.T) {
 	initClients()
 	testClient := Client{
-		Key: []byte("This-is-a-key"),
+		Key: "This-is-a-key",
 		Id:  "test-id"}
 
 	registered_client := RegisterTestClient(testClient, t)
@@ -61,7 +61,7 @@ func TestRegistrationHandler(t *testing.T) {
 		t.Errorf("Client has been assigned wrong id: got %v want %v", registered_client.Id, testClient.Id)
 	}
 
-	if !bytes.Equal(registered_client.Key, testClient.Key) {
+	if registered_client.Key != testClient.Key {
 		t.Errorf("Client has been assigned wrong key: got %v want %v", registered_client.Key, testClient.Key)
 	}
 }
@@ -69,7 +69,7 @@ func TestRegistrationHandler(t *testing.T) {
 func TestGetKeyById(t *testing.T) {
 	initClients()
 	testClient := Client{
-		Key: []byte("This-is-a-key"),
+		Key: "This-is-a-key",
 		Id:  "test-id"}
 
 	RegisterTestClient(testClient, t)
@@ -79,7 +79,7 @@ func TestGetKeyById(t *testing.T) {
 	body := GenerateBody(id, t)
 
 	rr := MakePostRequest(body, "getKeyById", t, GetKeyById)
-	expected := "{\"test-id\":\"VGhpcy1pcy1hLWtleQ==\"}"
+	expected := "{\"test-id\":\"This-is-a-key\"}"
 	if rr.Body.String() != expected {
 		t.Errorf("Returned wrong key for client: got %v want %v", rr.Body.String(), expected)
 	}
@@ -97,7 +97,7 @@ func SendTestMessages(sender_id string, recipient_id string, message_strings []s
 func TestSendMessages(t *testing.T) {
 	initClients()
 	testClient := Client{
-		Key: []byte("This-is-a-key"),
+		Key: "This-is-a-key",
 		Id:  "test-id"}
 
 	testClient1 := Client{
@@ -131,7 +131,7 @@ func TestSendMessages(t *testing.T) {
 func TestGetMessagesForId(t *testing.T) {
 	initClients()
 	testClient := Client{
-		Key: []byte("This-is-a-key"),
+		Key: "This-is-a-key",
 		Id:  "test-id"}
 
 	testClient1 := Client{

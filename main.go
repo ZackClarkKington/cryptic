@@ -8,7 +8,7 @@ import (
 )
 
 type Client struct {
-	Key         []byte `json "key"`
+	Key         string `json "key"`
 	Id          string `json "id"`
 	MessageBuff MessageBuffer
 }
@@ -108,7 +108,7 @@ func GetKeyById(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	var keys map[string][]byte = make(map[string][]byte)
+	var keys map[string]string = make(map[string]string)
 	/*
 		For each specified client id:
 		- Check if the client exists
@@ -150,6 +150,7 @@ func SendMessages(w http.ResponseWriter, r *http.Request) {
 	var sender string
 
 	if err = json.Unmarshal(body, &recipients); err != nil {
+		log.Println(err.Error())
 		InvalidJSONError(w)
 		return
 	}
